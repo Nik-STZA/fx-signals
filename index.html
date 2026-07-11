@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FX Signals</title>
+<meta name="description" content="Daily FX Evolution signal brief, trend tracker and price-validated track record.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef0f4">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#090b0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FX Signals">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  img{max-width:100%}
+</style>
+</head>
+<body>
+<title>FX Signals</title>
+
+<style>
+/* ---------- Tokens: chosen, not defaulted ------------------------------- */
+:root{
+  --paper:#eef0f4; --surface:#ffffff; --surface-2:#f6f7f9;
+  --ink:#131722; --ink-2:#4a5261; --muted:#8a93a3; --line:#e2e6ec;
+  --accent:#a4760f; --accent-soft:#f4ead2;
+  --bull:#14805f; --bull-soft:#dcefe7;
+  --bear:#bc3b2f; --bear-soft:#f6e0dc;
+  --neutral:#67728a;
+  --shadow:0 1px 2px rgba(19,23,34,.05),0 8px 24px -12px rgba(19,23,34,.18);
+  --r:16px; --r-sm:11px;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Segoe UI Mono",Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#090b0f; --surface:#161b22; --surface-2:#1c222b;
+    --ink:#e7eaf0; --ink-2:#a8b0bd; --muted:#6b7482; --line:#262d38;
+    --accent:#e0a63c; --accent-soft:#3a2f16;
+    --bull:#33c08a; --bull-soft:#12312a;
+    --bear:#e5645a; --bear-soft:#3a1f1e;
+    --neutral:#8a93a3;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="light"]{
+  --paper:#eef0f4; --surface:#ffffff; --surface-2:#f6f7f9;
+  --ink:#131722; --ink-2:#4a5261; --muted:#8a93a3; --line:#e2e6ec;
+  --accent:#a4760f; --accent-soft:#f4ead2;
+  --bull:#14805f; --bull-soft:#dcefe7; --bear:#bc3b2f; --bear-soft:#f6e0dc;
+  --neutral:#67728a; --shadow:0 1px 2px rgba(19,23,34,.05),0 8px 24px -12px rgba(19,23,34,.18);
+}
+:root[data-theme="dark"]{
+  --paper:#090b0f; --surface:#161b22; --surface-2:#1c222b;
+  --ink:#e7eaf0; --ink-2:#a8b0bd; --muted:#6b7482; --line:#262d38;
+  --accent:#e0a63c; --accent-soft:#3a2f16;
+  --bull:#33c08a; --bull-soft:#12312a; --bear:#e5645a; --bear-soft:#3a1f1e;
+  --neutral:#8a93a3; --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.45}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- App shell (phone column) ------------------------------------ */
+.device{max-width:440px;margin:0 auto;min-height:100dvh;background:var(--surface);
+  display:flex;flex-direction:column;position:relative;
+  box-shadow:0 0 0 1px var(--line)}
+@media (min-width:600px){
+  .device{margin:22px auto;min-height:calc(100dvh - 44px);border-radius:28px;
+    overflow:hidden;box-shadow:var(--shadow),0 0 0 1px var(--line)}
+  body{padding:0 12px}
+}
+
+.topbar{display:flex;align-items:center;gap:10px;padding:16px 18px 10px;
+  position:sticky;top:0;z-index:5;background:linear-gradient(var(--surface),var(--surface) 78%,transparent);
+  backdrop-filter:blur(6px)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.01em}
+.beacon{width:22px;height:22px;border-radius:7px;background:
+  radial-gradient(circle at 32% 30%,var(--accent),color-mix(in oklab,var(--accent),#000 22%));
+  box-shadow:0 0 0 3px var(--accent-soft);flex:0 0 auto;display:grid;place-items:center}
+.beacon::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--surface)}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:.02em}
+.spacer{flex:1}
+.iconbtn{appearance:none;border:1px solid var(--line);background:var(--surface-2);
+  color:var(--ink-2);width:38px;height:38px;border-radius:11px;font-size:16px;cursor:pointer;
+  display:grid;place-items:center}
+.iconbtn:active{transform:scale(.94)}
+
+main{flex:1;overflow-y:auto;padding:6px 16px 96px;-webkit-overflow-scrolling:touch}
+
+/* ---------- Bottom nav -------------------------------------------------- */
+.nav{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(3,1fr);
+  gap:2px;padding:8px 14px calc(10px + env(safe-area-inset-bottom));
+  background:color-mix(in oklab,var(--surface),transparent 6%);
+  backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.nav button{appearance:none;border:0;background:none;cursor:pointer;color:var(--muted);
+  font:inherit;font-size:11px;font-weight:600;letter-spacing:.02em;padding:6px 4px;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;gap:4px}
+.nav button .ico{font-size:17px;line-height:1}
+.nav button[aria-current="true"]{color:var(--accent)}
+
+/* ---------- Cards & type ------------------------------------------------ */
+.eyebrow{font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:15px 16px;margin:12px 0;box-shadow:var(--shadow)}
+.card.tap{cursor:pointer;transition:transform .12s,border-color .12s}
+.card.tap:active{transform:scale(.985)}
+.card h3{margin:0;font-size:14px;letter-spacing:-.01em}
+h1.day{font-size:23px;margin:2px 0 0;letter-spacing:-.02em;text-wrap:balance}
+
+.daynav{display:flex;align-items:center;gap:10px;margin:10px 0 2px}
+.daynav .arrow{width:40px;height:40px;flex:0 0 auto}
+.daynav .mid{flex:1;text-align:center}
+.daynav .mid .eyebrow{display:block}
+
+/* direction banner */
+.dir{display:flex;align-items:center;gap:14px;border-radius:var(--r);padding:15px 16px;margin:12px 0;
+  border:1px solid var(--line)}
+.dir .big{font-size:22px;font-weight:750;letter-spacing:-.01em;display:flex;align-items:center;gap:9px}
+.dir.bullish{background:var(--bull-soft);border-color:color-mix(in oklab,var(--bull),transparent 65%)}
+.dir.bullish .big{color:var(--bull)}
+.dir.bearish{background:var(--bear-soft);border-color:color-mix(in oklab,var(--bear),transparent 65%)}
+.dir.bearish .big{color:var(--bear)}
+.dir.mixed,.dir.neutral{background:var(--surface-2)}
+.dir.mixed .big,.dir.neutral .big{color:var(--neutral)}
+.dir .bars{flex:1;min-width:0}
+.dir .barrow{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);margin:3px 0}
+.dir .barrow b{width:34px;text-align:right;font-family:var(--mono);color:var(--ink)}
+.track2{flex:1;height:7px;border-radius:5px;background:var(--surface);overflow:hidden;
+  border:1px solid var(--line)}
+.track2 span{display:block;height:100%}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:12px;
+  background:var(--surface-2);border:1px solid var(--line);cursor:pointer;font-size:13px;font-weight:600;
+  letter-spacing:.01em}
+.chip:active{transform:scale(.95)}
+.chip .tk{font-family:var(--mono);font-weight:650}
+.chip .n{color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:600}
+.arrow-b{color:var(--bull)} .arrow-s{color:var(--bear)} .arrow-n{color:var(--neutral)}
+
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-size:11.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);
+  padding:5px 9px;border-radius:8px}
+.tag b{color:var(--muted);font-family:var(--mono);font-weight:600;margin-left:4px}
+
+/* "The read" — the daily narrative */
+.read{border-left:3px solid var(--accent);background:var(--surface-2)}
+.read .tldr{font-weight:650;font-size:14px;letter-spacing:-.005em;margin:6px 0 8px;
+  color:var(--ink);text-wrap:balance}
+.read p{font-size:14.5px;line-height:1.62;color:var(--ink-2);margin:0;max-width:62ch}
+.read p b,.read p strong{color:var(--ink)}
+
+.rowhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.badge{font-size:11px;font-weight:700;font-family:var(--mono);padding:3px 8px;border-radius:20px;
+  background:var(--accent-soft);color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.sub{color:var(--ink-2);font-size:13px;margin:3px 0 0}
+
+/* early-signal spark */
+.esig{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)}
+.esig:first-of-type{border-top:0}
+.esig .nm{font-weight:650;font-size:13.5px;min-width:0;flex:1}
+.esig .nm span{display:block;font-size:11px;color:var(--muted);font-weight:500}
+.spark{display:flex;align-items:flex-end;gap:3px;height:30px}
+.spark i{width:7px;background:color-mix(in oklab,var(--accent),transparent 55%);border-radius:3px 3px 0 0;
+  display:block}
+.spark i.last{background:var(--accent)}
+
+/* track ring */
+.ring{width:66px;height:66px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:conic-gradient(var(--accent) var(--p,0%),var(--surface-2) 0)}
+.ring::after{content:"";position:absolute;width:50px;height:50px;border-radius:50%;background:var(--surface)}
+.ring b{position:relative;font-family:var(--mono);font-weight:700;font-size:15px}
+.ring-wrap{position:relative;display:grid;place-items:center;width:66px;height:66px}
+
+/* list rows (signals / record) */
+.lrow{display:flex;align-items:center;gap:12px;padding:12px 2px;border-top:1px solid var(--line);
+  cursor:pointer}
+.lrow:first-child{border-top:0}
+.lrow .tk{font-family:var(--mono);font-weight:650;font-size:14px;min-width:64px}
+.lrow .cat{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.lrow .grow{flex:1;min-width:0}
+.trail{font-family:var(--mono);letter-spacing:1px;font-size:13px}
+.pos{color:var(--bull);font-family:var(--mono);font-weight:650}
+.neg{color:var(--bear);font-family:var(--mono);font-weight:650}
+.flat{color:var(--muted);font-family:var(--mono)}
+
+/* event pills */
+.ev{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+.ev:first-of-type{border-top:0}
+.ev .st{width:20px;text-align:center}
+.ev .when{font-family:var(--mono);color:var(--muted);font-size:11.5px;min-width:44px}
+.ev .it{font-family:var(--mono);font-weight:650;min-width:56px}
+.ev .rt{margin-left:auto;font-family:var(--mono);font-weight:650}
+
+/* ---------- Instrument sheet ------------------------------------------- */
+.sheet{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;
+  background:var(--surface);max-width:440px;margin:0 auto;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.3,.8,.3,1)}
+@media (min-width:600px){.sheet{margin:22px auto;max-height:calc(100dvh - 44px);border-radius:28px;overflow:hidden}}
+.sheet.open{transform:translateY(0)}
+.sheet header{display:flex;align-items:center;gap:12px;padding:16px 18px 8px}
+.sheet header .tk{font-family:var(--mono);font-weight:700;font-size:20px}
+.sheet .body{flex:1;overflow-y:auto;padding:6px 18px 30px}
+.kv{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.kv .pill{font-size:11.5px;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:20px;padding:4px 10px;color:var(--ink-2)}
+
+/* chart */
+.chartwrap{position:relative;margin:14px 0 4px}
+svg.chart{width:100%;height:180px;display:block;overflow:visible}
+.chart .grid{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.chart .area{fill:color-mix(in oklab,var(--accent),transparent 86%)}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke;
+  stroke-linejoin:round;stroke-linecap:round}
+.chart .cross{stroke:var(--muted);stroke-dasharray:3 3;vector-effect:non-scaling-stroke;opacity:0}
+/* HTML overlay: crisp dots + forward-return labels (no viewBox distortion) */
+.mkov{position:absolute;top:0;left:0;right:0;height:180px;pointer-events:none}
+.ovdot{position:absolute;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);
+  box-shadow:0 0 0 2px var(--surface)}
+.ovdot.b{background:var(--bull)} .ovdot.s{background:var(--bear)}
+.ovdot.end{width:9px;height:9px;background:var(--accent)}
+.mklab{position:absolute;font-family:var(--mono);font-size:10px;font-weight:700;white-space:nowrap;
+  padding:1px 4px;border-radius:5px;line-height:1.3;
+  background:color-mix(in oklab,var(--surface),transparent 8%);
+  box-shadow:0 0 0 1px var(--line)}
+.mklab.pos{color:var(--bull)} .mklab.neg{color:var(--bear)} .mklab.flatv{color:var(--muted)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);
+  font-family:var(--mono);font-size:11px;padding:4px 7px;border-radius:7px;opacity:0;
+  transform:translate(-50%,-130%);white-space:nowrap;z-index:2}
+.axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;
+  color:var(--muted);margin-top:4px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin:10px 0 2px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+.disc{font-size:11px;color:var(--muted);text-align:center;padding:14px 8px 4px;line-height:1.5}
+.divlabel{margin:20px 0 2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="device">
+  <div class="topbar">
+    <div class="brand"><span class="beacon"></span><span>FX Signals<small id="genline">daily brief</small></span></div>
+    <span class="spacer" style="flex:1"></span>
+    <button class="iconbtn" id="themeBtn" aria-label="Toggle light or dark">◐</button>
+  </div>
+  <main id="view"></main>
+  <nav class="nav">
+    <button data-view="brief" aria-current="true"><span class="ico">📰</span>Brief</button>
+    <button data-view="signals"><span class="ico">📡</span>Signals</button>
+    <button data-view="record"><span class="ico">🎯</span>Record</button>
+  </nav>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <header>
+    <button class="iconbtn" id="sheetClose" aria-label="Close">←</button>
+    <span class="tk" id="sheetTk"></span>
+    <span class="spacer" style="flex:1"></span>
+  </header>
+  <div class="body" id="sheetBody"></div>
+</div>
+
+<script id="appdata" type="application/json">{"generated":"2026-07-11","days":[{"date":"2026-07-03","title":"Are We Seeing Signs Of The BUBBLE POP?","summary":{"tldr":"Mixed tone. In focus: semiconductors and gold.","paragraph":"Today's video struck a two-sided, mixed tone, 24 bullish cues against 32 bearish. The most-discussed names were semiconductors (bearishly), gold (bullishly) and Bitcoin (bullishly). On the macro side, the AI/semis trade, fund flows and debt & credit led the conversation. Worth a caveat: the speaker hedged — “So, you know, you've just got to be careful, guys, here.”"},"direction":"mixed","bull":24,"bear":32,"instruments":[{"sym":"SEMIS","cat":"sector","count":21,"tone":"bearish"},{"sym":"GOLD","cat":"commodity","count":15,"tone":"bullish"},{"sym":"BTC","cat":"crypto","count":8,"tone":"bullish"},{"sym":"SPX","cat":"index","count":6,"tone":"neutral"},{"sym":"NASDAQ","cat":"index","count":5,"tone":"bearish"},{"sym":"SNDK","cat":"equity","count":3,"tone":"bearish"},{"sym":"HEALTHCARE","cat":"sector","count":3,"tone":"neutral"},{"sym":"MU","cat":"equity","count":2,"tone":"bearish"},{"sym":"BIOTECH","cat":"sector","count":2,"tone":"neutral"},{"sym":"OIL","cat":"commodity","count":2,"tone":"neutral"}],"themes":[{"name":"semiconductors / AI trade","count":13},{"name":"fund flows","count":10},{"name":"debt & credit","count":5},{"name":"options positioning / gamma","count":5},{"name":"volatility / risk-off","count":5},{"name":"earnings season","count":3}],"conviction":["important level","critical point","so key"],"caution":["That is basically a market that is trapped in time and going up and down within a large range showing huge amounts of activity when it comes to dark pools.","So it started to actually consolidate and create a pit which is since then unfortunately been in a downward trend.","So, you know, you've just got to be careful, guys, here.","Let's now check out here the options high and low levels are still trapped between the high and the low ranges.","Uh yeah, it's still in a downward trend and uh this goes to show why we often say buy the V, don't buy the dip.","Remember to stop a downward trend or to stop any kind of freight train, often you form a structure."],"early":[]},{"date":"2026-07-07","title":"Wall Street Insiders Are Selling?","summary":{"tldr":"Mixed tone. In focus: semiconductors and gold.","paragraph":"Today's video struck a two-sided, mixed tone, 33 bullish cues against 28 bearish. The most-discussed names were semiconductors (with mixed signals), gold (with mixed signals) and Bitcoin (bullishly). Versus yesterday, semiconductors shifted from bearish to mixed and gold shifted from bullish to mixed. On the macro side, earnings season, options positioning and fund flows led the conversation. Worth a caveat: the speaker hedged — “Uh and this chart here courtesy of volume leaders basically shows us that this market is currently trapped at least inside the range.”"},"direction":"mixed","bull":33,"bear":28,"instruments":[{"sym":"SEMIS","cat":"sector","count":17,"tone":"mixed"},{"sym":"GOLD","cat":"commodity","count":17,"tone":"mixed"},{"sym":"BTC","cat":"crypto","count":17,"tone":"bullish"},{"sym":"SPX","cat":"index","count":14,"tone":"mixed"},{"sym":"SAMSUNG","cat":"equity","count":5,"tone":"neutral"},{"sym":"IBIT","cat":"etf","count":4,"tone":"neutral"},{"sym":"NASDAQ","cat":"index","count":3,"tone":"neutral"},{"sym":"BIOTECH","cat":"sector","count":3,"tone":"neutral"},{"sym":"HEALTHCARE","cat":"sector","count":3,"tone":"neutral"},{"sym":"FINANCIALS","cat":"sector","count":3,"tone":"neutral"}],"themes":[{"name":"earnings season","count":27},{"name":"options positioning / gamma","count":11},{"name":"fund flows","count":10},{"name":"volatility / risk-off","count":10},{"name":"semiconductors / AI trade","count":4},{"name":"seasonality","count":3}],"conviction":["important level","pay attention"],"caution":["Uh and this chart here courtesy of volume leaders basically shows us that this market is currently trapped at least inside the range.","And maybe more importantly than all of this will probably be something like those Q700 zones because at the moment the markets seem to be trapped within a range."],"early":[]},{"date":"2026-07-08","title":"Wall Streets Biggest Bear Is Back…","summary":{"tldr":"Mixed tone. In focus: gold and Bitcoin.","paragraph":"Today's video struck a two-sided, mixed tone, 28 bullish cues against 27 bearish. The most-discussed names were gold (bullishly), Bitcoin (bearishly) and the S&P 500 (bullishly). Versus yesterday, gold shifted from mixed to bullish and Bitcoin shifted from bullish to bearish. On the macro side, earnings season, fund flows and options positioning led the conversation. Worth a caveat: the speaker hedged — “Uh kind of just sitting around the exact same point it's been the last couple of sessions, trapped within the range effectively.”"},"direction":"mixed","bull":28,"bear":27,"instruments":[{"sym":"GOLD","cat":"commodity","count":18,"tone":"bullish"},{"sym":"BTC","cat":"crypto","count":13,"tone":"bearish"},{"sym":"SPX","cat":"index","count":9,"tone":"bullish"},{"sym":"SEMIS","cat":"sector","count":9,"tone":"bearish"},{"sym":"MU","cat":"equity","count":5,"tone":"neutral"},{"sym":"OIL","cat":"commodity","count":5,"tone":"neutral"},{"sym":"NASDAQ","cat":"index","count":4,"tone":"neutral"},{"sym":"SNDK","cat":"equity","count":4,"tone":"neutral"},{"sym":"SILVER","cat":"commodity","count":4,"tone":"neutral"},{"sym":"RUSSELL","cat":"index","count":3,"tone":"bullish"}],"themes":[{"name":"earnings season","count":16},{"name":"fund flows","count":14},{"name":"options positioning / gamma","count":7},{"name":"volatility / risk-off","count":6},{"name":"debt & credit","count":4},{"name":"semiconductors / AI trade","count":4}],"conviction":["key level","important level","important zone","pay attention"],"caution":["We've got highs where it looks like there's resistance and we've got lows where it looks like there's support and basically the market is trapped within it.","Uh kind of just sitting around the exact same point it's been the last couple of sessions, trapped within the range effectively.","Here's the highs, Uh and you can see that we're kind of trapped within that range, but Ethereum didn't make a lower low, which again is slightly encouraging for the crypto traders out there."],"early":[]},{"date":"2026-07-09","title":"Wall Streets Biggest Test…","summary":{"tldr":"Mixed tone. In focus: the VIX and Bitcoin. Building: volatility and valuations.","paragraph":"Today's video struck a two-sided, mixed tone, 20 bullish cues against 16 bearish. The most-discussed names were the VIX (bearishly), Bitcoin (bullishly) and the Russell 2000 (non-committally). Versus yesterday, Bitcoin shifted from bearish to bullish and the Russell 2000 shifted from bullish to neutral. On the macro side, volatility, earnings season and fund flows led the conversation. Attention is building in volatility, valuations and TSMC — flagged several days running and rising into today. Worth a caveat: the speaker hedged — “So at the moment it's still in a downward trend with just the first signs of some recovery.”"},"direction":"mixed","bull":20,"bear":16,"instruments":[{"sym":"VIX","cat":"index","count":10,"tone":"bearish"},{"sym":"BTC","cat":"crypto","count":7,"tone":"bullish"},{"sym":"RUSSELL","cat":"index","count":6,"tone":"neutral"},{"sym":"MU","cat":"equity","count":6,"tone":"bearish"},{"sym":"GOLD","cat":"commodity","count":6,"tone":"mixed"},{"sym":"SPX","cat":"index","count":5,"tone":"bullish"},{"sym":"OIL","cat":"commodity","count":4,"tone":"bullish"},{"sym":"TSM","cat":"equity","count":3,"tone":"neutral"},{"sym":"JPM","cat":"equity","count":3,"tone":"neutral"},{"sym":"SEMIS","cat":"sector","count":3,"tone":"neutral"}],"themes":[{"name":"volatility / risk-off","count":13},{"name":"earnings season","count":9},{"name":"fund flows","count":8},{"name":"debt & credit","count":5},{"name":"options positioning / gamma","count":5},{"name":"valuations / bubble","count":4}],"conviction":["important zone","critical point"],"caution":["Still seeing a series of higher highs and higher lows coming in from the S&P and the market is still trapped between around 7,300 and 7600.","So at the moment it's still in a downward trend with just the first signs of some recovery."],"early":[{"name":"volatility / risk-off","kind":"theme","run":3,"streak":[10,6,13]},{"name":"valuations / bubble","kind":"theme","run":3,"streak":[2,2,4]},{"name":"TSM","kind":"instrument","run":3,"streak":[1,2,3]}]},{"date":"2026-07-10","title":"Wall Street Spreads Are The Widest Ever…","summary":{"tldr":"Bullish tone. In focus: gold and semiconductors. Building: options positioning and the AI/semis trade.","paragraph":"Today's video struck a bullish tone, 52 bullish cues against 26 bearish. The most-discussed names were gold (bullishly), semiconductors (bullishly) and the Nasdaq (non-committally). Versus yesterday, gold shifted from mixed to bullish and semiconductors shifted from neutral to bullish. On the macro side, earnings season, options positioning and debt & credit led the conversation. Attention is building in options positioning, the AI/semis trade and the Nasdaq — flagged several days running and rising into today. Worth a caveat: the speaker hedged — “It doesn't know what it wants to do.”"},"direction":"bullish","bull":52,"bear":26,"instruments":[{"sym":"GOLD","cat":"commodity","count":10,"tone":"bullish"},{"sym":"SEMIS","cat":"sector","count":9,"tone":"bullish"},{"sym":"NASDAQ","cat":"index","count":6,"tone":"neutral"},{"sym":"SPX","cat":"index","count":5,"tone":"mixed"},{"sym":"BTC","cat":"crypto","count":5,"tone":"bearish"},{"sym":"RUSSELL","cat":"index","count":4,"tone":"neutral"},{"sym":"KOSPI","cat":"index","count":4,"tone":"bearish"},{"sym":"SINGAPORE","cat":"index","count":4,"tone":"bullish"},{"sym":"FINANCIALS","cat":"sector","count":4,"tone":"neutral"},{"sym":"COPPER","cat":"commodity","count":4,"tone":"bullish"}],"themes":[{"name":"earnings season","count":25},{"name":"options positioning / gamma","count":15},{"name":"debt & credit","count":11},{"name":"volatility / risk-off","count":9},{"name":"fund flows","count":8},{"name":"semiconductors / AI trade","count":7}],"conviction":["watching closely","so much at stake","key zone","important level","important zone","critical point","levels to watch","you want to be watching"],"caution":["Although it has been a little bit worse of a timing read in recent years, so it's important to note that.","The question is now, is it some kind of dead cat bounce or something bigger?","It's only one data read, you can't go off it by itself, but it is still there.","Remember, we're currently still in a downward technical trend though on gold.","So, it's important to note that things are shifting a little bit on gold, but it hasn't really happened yet.","And the question is who's correct?"],"early":[{"name":"options positioning / gamma","kind":"theme","run":4,"streak":[11,7,5,15]},{"name":"semiconductors / AI trade","kind":"theme","run":4,"streak":[4,4,3,7]},{"name":"NASDAQ","kind":"instrument","run":4,"streak":[3,4,1,6]},{"name":"valuations / bubble","kind":"theme","run":4,"streak":[2,2,4,6]},{"name":"FINANCIALS","kind":"instrument","run":4,"streak":[3,2,3,4]},{"name":"TSM","kind":"instrument","run":4,"streak":[1,2,3,3]}]}],"track":{"hit_rate":57.0,"decided":23,"confirmed":13,"pending":10,"total":33,"avg_days":1.6,"t1avg":0.91,"t1n":23},"events":[{"date":"2026-07-03","item":"BTC","dir":"bullish","mentions":8,"escalating":false,"status":"confirmed","lag":3,"r":{"1":0.87,"3":2.32,"5":-0.46,"10":null}},{"date":"2026-07-03","item":"GOLD","dir":"bullish","mentions":15,"escalating":false,"status":"contradicted","lag":null,"r":{"1":-1.21,"3":-1.03,"5":null,"10":null}},{"date":"2026-07-03","item":"MU","dir":"bearish","mentions":2,"escalating":false,"status":"confirmed","lag":1,"r":{"1":-4.71,"3":0.7,"5":null,"10":null}},{"date":"2026-07-03","item":"NASDAQ","dir":"bearish","mentions":5,"escalating":false,"status":"confirmed","lag":1,"r":{"1":-1.77,"3":0.1,"5":null,"10":null}},{"date":"2026-07-03","item":"SEMIS","dir":"bearish","mentions":21,"escalating":false,"status":"confirmed","lag":1,"r":{"1":-5.13,"3":0.03,"5":null,"10":null}},{"date":"2026-07-03","item":"SNDK","dir":"bearish","mentions":3,"escalating":false,"status":"confirmed","lag":1,"r":{"1":-7.26,"3":6.53,"5":null,"10":null}},{"date":"2026-07-07","item":"BTC","dir":"bullish","mentions":17,"escalating":false,"status":"confirmed","lag":3,"r":{"1":-1.64,"3":1.31,"5":null,"10":null}},{"date":"2026-07-07","item":"ETH","dir":"bullish","mentions":2,"escalating":false,"status":"confirmed","lag":3,"r":{"1":-1.46,"3":1.54,"5":null,"10":null}},{"date":"2026-07-08","item":"BTC","dir":"bearish","mentions":13,"escalating":false,"status":"contradicted","lag":null,"r":{"1":1.5,"3":3.13,"5":null,"10":null}},{"date":"2026-07-08","item":"ETH","dir":"bullish","mentions":2,"escalating":false,"status":"confirmed","lag":3,"r":{"1":0.1,"3":3.15,"5":null,"10":null}},{"date":"2026-07-08","item":"GOLD","dir":"bullish","mentions":18,"escalating":false,"status":"confirmed","lag":1,"r":{"1":1.0,"3":null,"5":null,"10":null}},{"date":"2026-07-08","item":"KOSPI","dir":"bearish","mentions":3,"escalating":false,"status":"contradicted","lag":null,"r":{"1":1.11,"3":null,"5":null,"10":null}},{"date":"2026-07-08","item":"RUSSELL","dir":"bullish","mentions":3,"escalating":false,"status":"confirmed","lag":1,"r":{"1":1.22,"3":null,"5":null,"10":null}},{"date":"2026-07-08","item":"SAMSUNG","dir":"bullish","mentions":3,"escalating":false,"status":"flat","lag":null,"r":{"1":0.18,"3":null,"5":null,"10":null}},{"date":"2026-07-08","item":"SEMIS","dir":"bearish","mentions":9,"escalating":false,"status":"contradicted","lag":null,"r":{"1":3.5,"3":null,"5":null,"10":null}},{"date":"2026-07-08","item":"SPX","dir":"bullish","mentions":9,"escalating":false,"status":"flat","lag":null,"r":{"1":0.81,"3":null,"5":null,"10":null}},{"date":"2026-07-09","item":"BTC","dir":"bullish","mentions":7,"escalating":false,"status":"confirmed","lag":1,"r":{"1":1.48,"3":null,"5":null,"10":null}},{"date":"2026-07-09","item":"MU","dir":"bearish","mentions":6,"escalating":false,"status":"confirmed","lag":1,"r":{"1":-1.24,"3":null,"5":null,"10":null}},{"date":"2026-07-09","item":"OIL","dir":"bullish","mentions":4,"escalating":false,"status":"flat","lag":null,"r":{"1":-0.28,"3":null,"5":null,"10":null}},{"date":"2026-07-09","item":"RSP","dir":"bullish","mentions":3,"escalating":false,"status":"flat","lag":null,"r":{"1":0.37,"3":null,"5":null,"10":null}},{"date":"2026-07-09","item":"SPX","dir":"bullish","mentions":5,"escalating":false,"status":"flat","lag":null,"r":{"1":0.42,"3":null,"5":null,"10":null}},{"date":"2026-07-09","item":"VIX","dir":"bearish","mentions":10,"escalating":false,"status":"confirmed","lag":1,"r":{"1":-5.11,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"BIOTECH","dir":"bullish","mentions":3,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"BTC","dir":"bearish","mentions":5,"escalating":false,"status":"flat","lag":null,"r":{"1":0.13,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"COPPER","dir":"bullish","mentions":4,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"GOLD","dir":"bullish","mentions":10,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"JPM","dir":"bullish","mentions":2,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"KOSPI","dir":"bearish","mentions":4,"escalating":true,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"OIL","dir":"bullish","mentions":1,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"RSP","dir":"bullish","mentions":2,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"SEMIS","dir":"bullish","mentions":9,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"SILVER","dir":"bullish","mentions":2,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}},{"date":"2026-07-10","item":"SINGAPORE","dir":"bullish","mentions":4,"escalating":false,"status":"pending","lag":null,"r":{"1":null,"3":null,"5":null,"10":null}}],"ledger":{"SEMIS":{"cat":"sector","price_symbol":"SOXX","first_seen":"2026-07-03","days":5,"total":59,"trail":[{"date":"2026-07-03","tone":"bearish","count":21},{"date":"2026-07-07","tone":"mixed","count":17},{"date":"2026-07-08","tone":"bearish","count":9},{"date":"2026-07-09","tone":"neutral","count":3},{"date":"2026-07-10","tone":"bullish","count":9}]},"GOLD":{"cat":"commodity","price_symbol":"GLD","first_seen":"2026-07-03","days":5,"total":66,"trail":[{"date":"2026-07-03","tone":"bullish","count":15},{"date":"2026-07-07","tone":"mixed","count":17},{"date":"2026-07-08","tone":"bullish","count":18},{"date":"2026-07-09","tone":"mixed","count":6},{"date":"2026-07-10","tone":"bullish","count":10}]},"BTC":{"cat":"crypto","price_symbol":"BTC-USD","first_seen":"2026-07-03","days":5,"total":50,"trail":[{"date":"2026-07-03","tone":"bullish","count":8},{"date":"2026-07-07","tone":"bullish","count":17},{"date":"2026-07-08","tone":"bearish","count":13},{"date":"2026-07-09","tone":"bullish","count":7},{"date":"2026-07-10","tone":"bearish","count":5}]},"SPX":{"cat":"index","price_symbol":"^GSPC","first_seen":"2026-07-03","days":5,"total":39,"trail":[{"date":"2026-07-03","tone":"neutral","count":6},{"date":"2026-07-07","tone":"mixed","count":14},{"date":"2026-07-08","tone":"bullish","count":9},{"date":"2026-07-09","tone":"bullish","count":5},{"date":"2026-07-10","tone":"mixed","count":5}]},"NASDAQ":{"cat":"index","price_symbol":"^NDX","first_seen":"2026-07-03","days":5,"total":19,"trail":[{"date":"2026-07-03","tone":"bearish","count":5},{"date":"2026-07-07","tone":"neutral","count":3},{"date":"2026-07-08","tone":"neutral","count":4},{"date":"2026-07-09","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":6}]},"SNDK":{"cat":"equity","price_symbol":"SNDK","first_seen":"2026-07-03","days":3,"total":9,"trail":[{"date":"2026-07-03","tone":"bearish","count":3},{"date":"2026-07-08","tone":"neutral","count":4},{"date":"2026-07-10","tone":"neutral","count":2}]},"HEALTHCARE":{"cat":"sector","price_symbol":"XLV","first_seen":"2026-07-03","days":5,"total":12,"trail":[{"date":"2026-07-03","tone":"neutral","count":3},{"date":"2026-07-07","tone":"neutral","count":3},{"date":"2026-07-08","tone":"neutral","count":2},{"date":"2026-07-09","tone":"neutral","count":2},{"date":"2026-07-10","tone":"neutral","count":2}]},"MU":{"cat":"equity","price_symbol":"MU","first_seen":"2026-07-03","days":4,"total":15,"trail":[{"date":"2026-07-03","tone":"bearish","count":2},{"date":"2026-07-08","tone":"neutral","count":5},{"date":"2026-07-09","tone":"bearish","count":6},{"date":"2026-07-10","tone":"neutral","count":2}]},"BIOTECH":{"cat":"sector","price_symbol":"XBI","first_seen":"2026-07-03","days":5,"total":12,"trail":[{"date":"2026-07-03","tone":"neutral","count":2},{"date":"2026-07-07","tone":"neutral","count":3},{"date":"2026-07-08","tone":"neutral","count":2},{"date":"2026-07-09","tone":"neutral","count":2},{"date":"2026-07-10","tone":"bullish","count":3}]},"OIL":{"cat":"commodity","price_symbol":"USO","first_seen":"2026-07-03","days":5,"total":13,"trail":[{"date":"2026-07-03","tone":"neutral","count":2},{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-08","tone":"neutral","count":5},{"date":"2026-07-09","tone":"bullish","count":4},{"date":"2026-07-10","tone":"bullish","count":1}]},"KOSPI":{"cat":"index","price_symbol":"EWY","first_seen":"2026-07-03","days":4,"total":10,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-08","tone":"bearish","count":3},{"date":"2026-07-09","tone":"neutral","count":2},{"date":"2026-07-10","tone":"bearish","count":4}]},"EM":{"cat":"index","price_symbol":"EEM","first_seen":"2026-07-03","days":2,"total":2,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":1}]},"VIX":{"cat":"index","price_symbol":"^VIX","first_seen":"2026-07-03","days":4,"total":14,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-09","tone":"bearish","count":10},{"date":"2026-07-10","tone":"neutral","count":2}]},"SPACEX":{"cat":"equity","price_symbol":null,"first_seen":"2026-07-03","days":3,"total":3,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":1}]},"FINANCIALS":{"cat":"sector","price_symbol":"XLF","first_seen":"2026-07-03","days":5,"total":13,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-07","tone":"neutral","count":3},{"date":"2026-07-08","tone":"neutral","count":2},{"date":"2026-07-09","tone":"neutral","count":3},{"date":"2026-07-10","tone":"neutral","count":4}]},"SOFTWARE":{"cat":"sector","price_symbol":"IGV","first_seen":"2026-07-03","days":3,"total":3,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-09","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":1}]},"SILVER":{"cat":"commodity","price_symbol":"SLV","first_seen":"2026-07-03","days":5,"total":10,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-08","tone":"neutral","count":4},{"date":"2026-07-09","tone":"neutral","count":2},{"date":"2026-07-10","tone":"bullish","count":2}]},"COPPER":{"cat":"commodity","price_symbol":"CPER","first_seen":"2026-07-03","days":4,"total":7,"trail":[{"date":"2026-07-03","tone":"neutral","count":1},{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-08","tone":"neutral","count":1},{"date":"2026-07-10","tone":"bullish","count":4}]},"SAMSUNG":{"cat":"equity","price_symbol":"005930.KS","first_seen":"2026-07-07","days":4,"total":10,"trail":[{"date":"2026-07-07","tone":"neutral","count":5},{"date":"2026-07-08","tone":"bullish","count":3},{"date":"2026-07-09","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":1}]},"IBIT":{"cat":"etf","price_symbol":"IBIT","first_seen":"2026-07-07","days":2,"total":5,"trail":[{"date":"2026-07-07","tone":"neutral","count":4},{"date":"2026-07-10","tone":"neutral","count":1}]},"RSP":{"cat":"etf","price_symbol":"RSP","first_seen":"2026-07-07","days":4,"total":10,"trail":[{"date":"2026-07-07","tone":"neutral","count":3},{"date":"2026-07-08","tone":"neutral","count":2},{"date":"2026-07-09","tone":"bullish","count":3},{"date":"2026-07-10","tone":"bullish","count":2}]},"ETH":{"cat":"crypto","price_symbol":"ETH-USD","first_seen":"2026-07-07","days":4,"total":6,"trail":[{"date":"2026-07-07","tone":"bullish","count":2},{"date":"2026-07-08","tone":"bullish","count":2},{"date":"2026-07-09","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":1}]},"TSM":{"cat":"equity","price_symbol":"TSM","first_seen":"2026-07-07","days":4,"total":9,"trail":[{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-08","tone":"neutral","count":2},{"date":"2026-07-09","tone":"neutral","count":3},{"date":"2026-07-10","tone":"neutral","count":3}]},"INSURANCE":{"cat":"sector","price_symbol":"KIE","first_seen":"2026-07-07","days":2,"total":3,"trail":[{"date":"2026-07-07","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":2}]},"RUSSELL":{"cat":"index","price_symbol":"^RUT","first_seen":"2026-07-08","days":3,"total":13,"trail":[{"date":"2026-07-08","tone":"bullish","count":3},{"date":"2026-07-09","tone":"neutral","count":6},{"date":"2026-07-10","tone":"neutral","count":4}]},"HYNIX":{"cat":"equity","price_symbol":"000660.KS","first_seen":"2026-07-08","days":2,"total":5,"trail":[{"date":"2026-07-08","tone":"neutral","count":2},{"date":"2026-07-10","tone":"neutral","count":3}]},"DOW":{"cat":"index","price_symbol":"^DJI","first_seen":"2026-07-08","days":3,"total":4,"trail":[{"date":"2026-07-08","tone":"neutral","count":1},{"date":"2026-07-09","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":2}]},"NVDA":{"cat":"equity","price_symbol":"NVDA","first_seen":"2026-07-08","days":1,"total":1,"trail":[{"date":"2026-07-08","tone":"neutral","count":1}]},"USO":{"cat":"etf","price_symbol":"USO","first_seen":"2026-07-08","days":3,"total":3,"trail":[{"date":"2026-07-08","tone":"neutral","count":1},{"date":"2026-07-09","tone":"neutral","count":1},{"date":"2026-07-10","tone":"neutral","count":1}]},"DXY":{"cat":"fx","price_symbol":"DX-Y.NYB","first_seen":"2026-07-08","days":1,"total":1,"trail":[{"date":"2026-07-08","tone":"neutral","count":1}]},"JPM":{"cat":"equity","price_symbol":"JPM","first_seen":"2026-07-09","days":2,"total":5,"trail":[{"date":"2026-07-09","tone":"neutral","count":3},{"date":"2026-07-10","tone":"bullish","count":2}]},"SINGAPORE":{"cat":"index","price_symbol":"EWS","first_seen":"2026-07-10","days":1,"total":4,"trail":[{"date":"2026-07-10","tone":"bullish","count":4}]}},"prices":{"SEMIS":[["2026-06-10",541.51],["2026-06-11",586.93],["2026-06-12",596.25],["2026-06-15",628.45],["2026-06-16",591.24],["2026-06-17",599.73],["2026-06-18",639.45],["2026-06-22",655.01],["2026-06-23",603.39],["2026-06-24",601.5],["2026-06-25",625.2],["2026-06-26",589.94],["2026-06-29",614.35],["2026-06-30",640.76],["2026-07-01",599.7],["2026-07-02",566.32],["2026-07-06",581.51],["2026-07-07",551.69],["2026-07-08",562.03],["2026-07-09",581.7],["2026-07-10",581.34]],"GOLD":[["2026-06-10",374.58],["2026-06-11",386.32],["2026-06-12",386.54],["2026-06-15",396.55],["2026-06-16",397.63],["2026-06-17",388.6],["2026-06-18",387.12],["2026-06-22",384.59],["2026-06-23",377.32],["2026-06-24",365.92],["2026-06-25",369.46],["2026-06-26",373.63],["2026-06-29",368.58],["2026-06-30",368.38],["2026-07-01",370.6],["2026-07-02",378.13],["2026-07-06",382.13],["2026-07-07",377.49],["2026-07-08",374.45],["2026-07-09",378.18],["2026-07-10",377.01]],"BTC":[["2026-06-10",61449.2891],["2026-06-11",63561.0547],["2026-06-12",63543.1992],["2026-06-13",64421.3242],["2026-06-14",65710.3984],["2026-06-15",66289.5],["2026-06-16",65600.6406],["2026-06-17",64418.4453],["2026-06-18",62896.4727],["2026-06-19",63540.8359],["2026-06-20",64239.6758],["2026-06-21",63237.5391],["2026-06-22",63952.1055],["2026-06-23",62668.0195],["2026-06-24",60995.1328],["2026-06-25",59721.6758],["2026-06-26",60016.4297],["2026-06-27",59940.0977],["2026-06-28",59532.3398],["2026-06-29",60138.3789],["2026-06-30",58558.8594],["2026-07-01",60003.7578],["2026-07-02",61485.3008],["2026-07-03",62544.1992],["2026-07-04",63088.3047],["2026-07-05",63547.8828],["2026-07-06",63995.0156],["2026-07-07",63297.3945],["2026-07-08",62257.5742],["2026-07-09",63193.1484],["2026-07-10",64127.1406],["2026-07-11",64209.1992]],"SPX":[["2026-06-10",7266.9902],["2026-06-11",7394.2998],["2026-06-12",7431.46],["2026-06-15",7554.29],["2026-06-16",7511.3501],["2026-06-17",7420.1001],["2026-06-18",7500.5801],["2026-06-22",7472.79],["2026-06-23",7365.46],["2026-06-24",7358.2202],["2026-06-25",7357.4902],["2026-06-26",7354.02],["2026-06-29",7440.4302],["2026-06-30",7499.3599],["2026-07-01",7483.23],["2026-07-02",7483.2402],["2026-07-06",7537.4302],["2026-07-07",7503.8501],["2026-07-08",7482.71],["2026-07-09",7543.6401],["2026-07-10",7575.3901]],"NASDAQ":[["2026-06-10",28508.0293],["2026-06-11",29446.1797],["2026-06-12",29635.9492],["2026-06-15",30543.9199],["2026-06-16",29968.1309],["2026-06-17",29670.9492],["2026-06-18",30406.1895],["2026-06-22",30347.0801],["2026-06-23",29347.2695],["2026-06-24",29220.0605],["2026-06-25",29440.3203],["2026-06-26",29118.2402],["2026-06-29",29774.75],["2026-06-30",30276.3496],["2026-07-01",29809.1309],["2026-07-02",29329.2109],["2026-07-06",29697.8691],["2026-07-07",29173.0195],["2026-07-08",29252.5605],["2026-07-09",29727.0996],["2026-07-10",29825.1094]],"SNDK":[["2026-06-10",1643.23],["2026-06-11",1881.51],["2026-06-12",1980.1],["2026-06-15",2107.8601],["2026-06-16",1991.55],["2026-06-17",1958.8],["2026-06-18",2184.75],["2026-06-22",2273.73],["2026-06-23",1963.6],["2026-06-24",1914.46],["2026-06-25",2335.0],["2026-06-26",2090.71],["2026-06-29",2050.3899],["2026-06-30",2273.73],["2026-07-01",2032.22],["2026-07-02",1745.0],["2026-07-06",1744.4301],["2026-07-07",1617.7],["2026-07-08",1727.1801],["2026-07-09",1858.27],["2026-07-10",1915.92]],"HEALTHCARE":[["2026-06-10",152.85],["2026-06-11",154.09],["2026-06-12",153.81],["2026-06-15",152.89],["2026-06-16",152.94],["2026-06-17",150.71],["2026-06-18",149.4],["2026-06-22",150.06],["2026-06-23",152.18],["2026-06-24",153.35],["2026-06-25",155.63],["2026-06-26",160.34],["2026-06-29",160.74],["2026-06-30",158.66],["2026-07-01",159.54],["2026-07-02",163.74],["2026-07-06",161.96],["2026-07-07",164.44],["2026-07-08",162.3],["2026-07-09",162.17],["2026-07-10",160.84]],"MU":[["2026-06-10",891.88],["2026-06-11",995.87],["2026-06-12",981.61],["2026-06-15",1087.99],["2026-06-16",1020.76],["2026-06-17",1043.1899],["2026-06-18",1133.99],["2026-06-22",1211.38],["2026-06-23",1051.77],["2026-06-24",1048.51],["2026-06-25",1213.5601],["2026-06-26",1132.33],["2026-06-29",1145.28],["2026-06-30",1154.29],["2026-07-01",1032.28],["2026-07-02",975.56],["2026-07-06",984.75],["2026-07-07",938.38],["2026-07-08",948.8],["2026-07-09",991.64],["2026-07-10",979.3]],"BIOTECH":[["2026-06-10",128.85],["2026-06-11",132.74],["2026-06-12",133.79],["2026-06-15",136.4],["2026-06-16",135.34],["2026-06-17",139.39],["2026-06-18",140.72],["2026-06-22",145.86],["2026-06-23",147.03],["2026-06-24",149.71],["2026-06-25",151.59],["2026-06-26",155.38],["2026-06-29",158.31],["2026-06-30",158.25],["2026-07-01",156.55],["2026-07-02",160.46],["2026-07-06",160.81],["2026-07-07",163.87],["2026-07-08",162.97],["2026-07-09",164.28],["2026-07-10",159.03]],"OIL":[["2026-06-10",134.3],["2026-06-11",128.83],["2026-06-12",125.43],["2026-06-15",121.21],["2026-06-16",115.47],["2026-06-17",114.23],["2026-06-18",114.87],["2026-06-22",112.69],["2026-06-23",111.26],["2026-06-24",106.29],["2026-06-25",109.31],["2026-06-26",105.48],["2026-06-29",107.08],["2026-06-30",106.44],["2026-07-01",103.27],["2026-07-02",103.98],["2026-07-06",104.35],["2026-07-07",108.92],["2026-07-08",112.21],["2026-07-09",109.01],["2026-07-10",108.7]],"KOSPI":[["2026-06-10",178.45],["2026-06-11",198.94],["2026-06-12",197.45],["2026-06-15",211.45],["2026-06-16",205.91],["2026-06-17",205.08],["2026-06-18",219.2],["2026-06-22",219.02],["2026-06-23",192.2],["2026-06-24",197.26],["2026-06-25",205.0],["2026-06-26",197.28],["2026-06-29",197.5],["2026-06-30",201.9],["2026-07-01",185.5],["2026-07-02",180.14],["2026-07-06",189.85],["2026-07-07",181.29],["2026-07-08",182.72],["2026-07-09",184.75],["2026-07-10",183.52]],"EM":[["2026-06-10",64.66],["2026-06-11",67.5],["2026-06-12",67.88],["2026-06-15",69.75],["2026-06-16",68.64],["2026-06-17",68.56],["2026-06-18",70.79],["2026-06-22",71.21],["2026-06-23",67.17],["2026-06-24",67.25],["2026-06-25",67.96],["2026-06-26",67.19],["2026-06-29",67.43],["2026-06-30",68.41],["2026-07-01",66.48],["2026-07-02",65.7],["2026-07-06",67.57],["2026-07-07",65.72],["2026-07-08",66.23],["2026-07-09",66.78],["2026-07-10",66.9]],"VIX":[["2026-06-10",22.22],["2026-06-11",19.44],["2026-06-12",17.68],["2026-06-15",16.2],["2026-06-16",16.41],["2026-06-17",18.44],["2026-06-18",16.4],["2026-06-22",17.28],["2026-06-23",19.49],["2026-06-24",18.63],["2026-06-25",18.89],["2026-06-26",18.41],["2026-06-29",17.65],["2026-06-30",16.45],["2026-07-01",16.59],["2026-07-02",16.15],["2026-07-06",15.57],["2026-07-07",16.13],["2026-07-08",16.9],["2026-07-09",15.84],["2026-07-10",15.03]],"FINANCIALS":[["2026-06-10",52.23],["2026-06-11",52.62],["2026-06-12",53.34],["2026-06-15",53.56],["2026-06-16",54.35],["2026-06-17",54.05],["2026-06-18",53.57],["2026-06-22",53.7],["2026-06-23",53.88],["2026-06-24",53.72],["2026-06-25",53.45],["2026-06-26",53.57],["2026-06-29",53.72],["2026-06-30",53.61],["2026-07-01",54.78],["2026-07-02",55.62],["2026-07-06",56.14],["2026-07-07",56.05],["2026-07-08",54.97],["2026-07-09",55.54],["2026-07-10",55.71]],"SOFTWARE":[["2026-06-10",91.58],["2026-06-11",90.92],["2026-06-12",90.7],["2026-06-15",92.68],["2026-06-16",91.37],["2026-06-17",89.16],["2026-06-18",89.09],["2026-06-22",87.31],["2026-06-23",87.32],["2026-06-24",86.17],["2026-06-25",84.76],["2026-06-26",88.2],["2026-06-29",89.89],["2026-06-30",90.6],["2026-07-01",93.34],["2026-07-02",93.57],["2026-07-06",94.79],["2026-07-07",94.13],["2026-07-08",92.48],["2026-07-09",93.88],["2026-07-10",92.41]],"SILVER":[["2026-06-10",57.66],["2026-06-11",60.82],["2026-06-12",61.29],["2026-06-15",63.47],["2026-06-16",63.39],["2026-06-17",60.61],["2026-06-18",59.51],["2026-06-22",58.91],["2026-06-23",55.73],["2026-06-24",51.78],["2026-06-25",52.36],["2026-06-26",53.28],["2026-06-29",52.68],["2026-06-30",53.47],["2026-07-01",53.58],["2026-07-02",55.02],["2026-07-06",56.11],["2026-07-07",54.46],["2026-07-08",52.83],["2026-07-09",54.14],["2026-07-10",53.95]],"COPPER":[["2026-06-10",37.72],["2026-06-11",38.94],["2026-06-12",39.55],["2026-06-15",39.65],["2026-06-16",39.55],["2026-06-17",38.64],["2026-06-18",38.86],["2026-06-22",38.81],["2026-06-23",37.32],["2026-06-24",36.31],["2026-06-25",36.98],["2026-06-26",37.33],["2026-06-29",37.23],["2026-06-30",37.73],["2026-07-01",37.21],["2026-07-02",37.29],["2026-07-06",37.84],["2026-07-07",37.39],["2026-07-08",37.07],["2026-07-09",37.75],["2026-07-10",37.99]],"SAMSUNG":[["2026-06-10",302500.0],["2026-06-11",299000.0],["2026-06-12",322500.0],["2026-06-15",337000.0],["2026-06-16",343000.0],["2026-06-17",346500.0],["2026-06-18",362500.0],["2026-06-19",354000.0],["2026-06-22",353500.0],["2026-06-23",310000.0],["2026-06-24",340500.0],["2026-06-25",358500.0],["2026-06-26",339500.0],["2026-06-29",323000.0],["2026-06-30",334000.0],["2026-07-01",314500.0],["2026-07-02",286000.0],["2026-07-03",309500.0],["2026-07-06",318000.0],["2026-07-07",296000.0],["2026-07-08",277500.0],["2026-07-09",278000.0],["2026-07-10",285000.0]],"IBIT":[["2026-06-10",35.08],["2026-06-11",36.05],["2026-06-12",36.04],["2026-06-15",37.74],["2026-06-16",37.17],["2026-06-17",36.36],["2026-06-18",35.62],["2026-06-22",36.5],["2026-06-23",35.31],["2026-06-24",33.87],["2026-06-25",33.52],["2026-06-26",33.85],["2026-06-29",34.18],["2026-06-30",33.29],["2026-07-01",34.0],["2026-07-02",34.87],["2026-07-06",36.12],["2026-07-07",36.15],["2026-07-08",35.23],["2026-07-09",35.81],["2026-07-10",36.23]],"RSP":[["2026-06-10",206.53],["2026-06-11",209.75],["2026-06-12",211.65],["2026-06-15",212.88],["2026-06-16",212.17],["2026-06-17",208.99],["2026-06-18",209.96],["2026-06-22",209.61],["2026-06-23",208.89],["2026-06-24",210.38],["2026-06-25",211.75],["2026-06-26",210.31],["2026-06-29",213.05],["2026-06-30",212.77],["2026-07-01",213.41],["2026-07-02",214.91],["2026-07-06",215.0],["2026-07-07",214.73],["2026-07-08",212.2],["2026-07-09",213.5],["2026-07-10",214.3]],"ETH":[["2026-06-10",1620.1377],["2026-06-11",1672.2806],["2026-06-12",1665.1278],["2026-06-13",1680.2146],["2026-06-14",1724.6133],["2026-06-15",1794.9612],["2026-06-16",1790.3982],["2026-06-17",1747.8855],["2026-06-18",1709.5334],["2026-06-19",1710.9824],["2026-06-20",1739.3014],["2026-06-21",1704.5806],["2026-06-22",1726.5109],["2026-06-23",1665.4368],["2026-06-24",1619.9249],["2026-06-25",1564.8167],["2026-06-26",1576.6161],["2026-06-27",1571.5883],["2026-06-28",1570.3612],["2026-06-29",1610.2058],["2026-06-30",1569.5839],["2026-07-01",1608.9607],["2026-07-02",1698.1694],["2026-07-03",1756.5187],["2026-07-04",1779.033],["2026-07-05",1783.006],["2026-07-06",1797.5737],["2026-07-07",1768.5115],["2026-07-08",1742.6776],["2026-07-09",1744.4846],["2026-07-10",1795.6932],["2026-07-11",1797.5699]],"TSM":[["2026-06-10",408.75],["2026-06-11",421.07],["2026-06-12",423.93],["2026-06-15",441.4],["2026-06-16",425.83],["2026-06-17",432.15],["2026-06-18",462.12],["2026-06-22",467.67],["2026-06-23",436.39],["2026-06-24",440.83],["2026-06-25",434.99],["2026-06-26",432.35],["2026-06-29",455.1],["2026-06-30",477.57],["2026-07-01",444.23],["2026-07-02",434.16],["2026-07-06",451.79],["2026-07-07",432.57],["2026-07-08",436.98],["2026-07-09",436.96],["2026-07-10",434.11]],"INSURANCE":[["2026-06-10",58.08],["2026-06-11",58.07],["2026-06-12",58.44],["2026-06-15",58.38],["2026-06-16",58.79],["2026-06-17",58.29],["2026-06-18",58.22],["2026-06-22",58.25],["2026-06-23",59.62],["2026-06-24",59.72],["2026-06-25",59.13],["2026-06-26",61.05],["2026-06-29",61.39],["2026-06-30",60.99],["2026-07-01",62.4],["2026-07-02",64.08],["2026-07-06",63.85],["2026-07-07",64.41],["2026-07-08",63.58],["2026-07-09",63.43],["2026-07-10",63.46]],"RUSSELL":[["2026-06-10",2835.46],["2026-06-11",2921.03],["2026-06-12",2943.99],["2026-06-15",2965.0901],["2026-06-16",2939.2],["2026-06-17",2917.98],["2026-06-18",2979.77],["2026-06-22",3004.3999],["2026-06-23",2975.48],["2026-06-24",2986.6299],["2026-06-25",3007.8601],["2026-06-26",3010.0801],["2026-06-29",3010.4199],["2026-06-30",3024.3701],["2026-07-01",3012.5901],["2026-07-02",2996.1101],["2026-07-06",3009.54],["2026-07-07",2982.49],["2026-07-08",2956.3899],["2026-07-09",2992.54],["2026-07-10",2977.8101]],"HYNIX":[["2026-06-10",2048000.0],["2026-06-11",2101000.0],["2026-06-12",2150000.0],["2026-06-15",2288000.0],["2026-06-16",2382000.0],["2026-06-17",2521000.0],["2026-06-18",2685000.0],["2026-06-19",2764000.0],["2026-06-22",2919000.0],["2026-06-23",2555000.0],["2026-06-24",2621000.0],["2026-06-25",2917000.0],["2026-06-26",2673000.0],["2026-06-29",2628000.0],["2026-06-30",2650000.0],["2026-07-01",2560000.0],["2026-07-02",2187000.0],["2026-07-03",2425000.0],["2026-07-06",2343000.0],["2026-07-07",2201000.0],["2026-07-08",2076000.0],["2026-07-09",2186000.0],["2026-07-10",2180000.0]],"DOW":[["2026-06-10",49918.7812],["2026-06-11",50848.75],["2026-06-12",51202.2617],["2026-06-15",51671.0312],["2026-06-16",51999.6719],["2026-06-17",51492.5508],["2026-06-18",51564.6992],["2026-06-22",51712.7109],["2026-06-23",51666.8398],["2026-06-24",51848.8984],["2026-06-25",51920.6211],["2026-06-26",51876.1094],["2026-06-29",52182.7383],["2026-06-30",52319.1992],["2026-07-01",52305.2383],["2026-07-02",52900.0703],["2026-07-06",53055.9102],["2026-07-07",52925.1484],["2026-07-08",52348.3906],["2026-07-09",52487.4102],["2026-07-10",52637.0117]],"NVDA":[["2026-06-10",200.42],["2026-06-11",204.87],["2026-06-12",205.19],["2026-06-15",212.45],["2026-06-16",207.41],["2026-06-17",204.65],["2026-06-18",210.69],["2026-06-22",208.65],["2026-06-23",200.04],["2026-06-24",199.0],["2026-06-25",195.74],["2026-06-26",192.53],["2026-06-29",194.97],["2026-06-30",200.09],["2026-07-01",197.58],["2026-07-02",194.83],["2026-07-06",195.55],["2026-07-07",196.93],["2026-07-08",204.12],["2026-07-09",202.78],["2026-07-10",210.96]],"USO":[["2026-06-10",134.3],["2026-06-11",128.83],["2026-06-12",125.43],["2026-06-15",121.21],["2026-06-16",115.47],["2026-06-17",114.23],["2026-06-18",114.87],["2026-06-22",112.69],["2026-06-23",111.26],["2026-06-24",106.29],["2026-06-25",109.31],["2026-06-26",105.48],["2026-06-29",107.08],["2026-06-30",106.44],["2026-07-01",103.27],["2026-07-02",103.98],["2026-07-06",104.35],["2026-07-07",108.92],["2026-07-08",112.21],["2026-07-09",109.01],["2026-07-10",108.7]],"DXY":[["2026-06-10",99.95],["2026-06-11",99.86],["2026-06-12",99.75],["2026-06-15",99.63],["2026-06-16",99.54],["2026-06-17",100.09],["2026-06-18",100.85],["2026-06-22",101.02],["2026-06-23",101.41],["2026-06-24",101.61],["2026-06-25",101.43],["2026-06-26",101.36],["2026-06-29",101.11],["2026-06-30",101.19],["2026-07-01",101.39],["2026-07-02",100.86],["2026-07-06",100.85],["2026-07-07",101.14],["2026-07-08",101.05],["2026-07-09",100.94],["2026-07-10",100.97]],"JPM":[["2026-06-10",309.14],["2026-06-11",313.49],["2026-06-12",320.72],["2026-06-15",319.4],["2026-06-16",331.14],["2026-06-17",333.46],["2026-06-18",325.22],["2026-06-22",331.48],["2026-06-23",334.14],["2026-06-24",333.45],["2026-06-25",335.12],["2026-06-26",329.05],["2026-06-29",329.39],["2026-06-30",327.33],["2026-07-01",334.07],["2026-07-02",334.47],["2026-07-06",337.72],["2026-07-07",339.22],["2026-07-08",330.62],["2026-07-09",335.47],["2026-07-10",336.47]],"SINGAPORE":[["2026-06-10",28.53],["2026-06-11",29.13],["2026-06-12",29.15],["2026-06-15",28.92],["2026-06-16",29.36],["2026-06-17",29.59],["2026-06-18",29.79],["2026-06-22",29.79],["2026-06-23",29.63],["2026-06-24",29.65],["2026-06-25",29.57],["2026-06-26",29.66],["2026-06-29",29.83],["2026-06-30",29.61],["2026-07-01",29.7],["2026-07-02",30.16],["2026-07-06",30.28],["2026-07-07",30.66],["2026-07-08",31.01],["2026-07-09",31.36],["2026-07-10",31.64]]}}</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('appdata').textContent);
+const $ = s => document.querySelector(s);
+const el = (t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const fmtDate = d => new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const fmtFull = d => new Date(d+'T00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+const toneArrow = t => t==='bullish'?'▲':t==='bearish'?'▼':t==='mixed'?'◆':'·';
+const toneCls   = t => t==='bullish'?'arrow-b':t==='bearish'?'arrow-s':'arrow-n';
+const trailTick = t => `<span class="${toneCls(t)}">${toneArrow(t)}</span>`;
+const pct = v => v==null?'—':(v>0?'+':'')+v.toFixed(1)+'%';
+const pctCls = v => v==null?'flat':v>0.3?'pos':v<-0.3?'neg':'flat';
+
+let dayIdx = DATA.days.length-1;   // start on the most recent brief
+let curView = 'brief';
+
+/* ---- Theme toggle ---------------------------------------------------- */
+$('#themeBtn').onclick = ()=>{
+  const now = document.documentElement.getAttribute('data-theme')
+    || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme', now==='dark'?'light':'dark');
+};
+
+/* ---- Nav ------------------------------------------------------------- */
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{
+  curView=b.dataset.view;
+  document.querySelectorAll('.nav button').forEach(x=>x.setAttribute('aria-current', x===b));
+  render();
+});
+
+/* ---- Views ----------------------------------------------------------- */
+function render(){
+  const v=$('#view'); v.innerHTML=''; v.scrollTop=0;
+  if(curView==='brief') renderBrief(v);
+  else if(curView==='signals') renderSignals(v);
+  else renderRecord(v);
+}
+
+function renderBrief(v){
+  const d = DATA.days[dayIdx];
+  // day navigation
+  const nav = el('div','daynav');
+  const prev = el('button','iconbtn arrow','◀'); prev.disabled = dayIdx===0;
+  const next = el('button','iconbtn arrow','▶'); next.disabled = dayIdx===DATA.days.length-1;
+  prev.onclick=()=>{if(dayIdx>0){dayIdx--;render();}};
+  next.onclick=()=>{if(dayIdx<DATA.days.length-1){dayIdx++;render();}};
+  const mid = el('div','mid',`<span class="eyebrow">${fmtFull(d.date)}</span><h1 class="day">${d.title}</h1>`);
+  nav.append(prev,mid,next); v.append(nav);
+
+  // direction banner
+  const total=d.bull+d.bear;
+  const bp=total?Math.round(d.bull/total*100):50;
+  const label={bullish:'Bullish',bearish:'Bearish',mixed:'Mixed',neutral:'Neutral'}[d.direction];
+  const dir = el('div','dir '+d.direction);
+  dir.innerHTML=`<div class="big">${toneArrow(d.direction)} ${label}</div>
+    <div class="bars">
+      <div class="barrow"><span class="track2"><span style="width:${bp}%;background:var(--bull)"></span></span><b>${d.bull}</b></div>
+      <div class="barrow"><span class="track2"><span style="width:${100-bp}%;background:var(--bear)"></span></span><b>${d.bear}</b></div>
+    </div>`;
+  v.append(dir);
+
+  // The read -- daily narrative
+  if(d.summary){
+    const rd=el('div','card read');
+    rd.append(el('div','eyebrow','The read'));
+    if(d.summary.tldr) rd.append(el('div','tldr',d.summary.tldr));
+    if(d.summary.paragraph) rd.append(el('p',null,d.summary.paragraph));
+    v.append(rd);
+  }
+
+  // instruments in focus
+  const c1=el('div','card');
+  c1.append(el('div','eyebrow','In focus today'));
+  const chips=el('div','chips');
+  d.instruments.forEach(it=>{
+    const ch=el('button','chip');
+    ch.innerHTML=`<span class="tk">${it.sym}</span>${trailTick(it.tone)}<span class="n">${it.count}</span>`;
+    ch.onclick=()=>openInstrument(it.sym);
+    chips.append(ch);
+  });
+  c1.append(chips);
+  if(d.themes.length){
+    const tags=el('div','tags');
+    d.themes.forEach(t=>tags.append(el('span','tag',`${t.name}<b>${t.count}</b>`)));
+    c1.append(el('div','eyebrow','Themes discussed',),tags);
+    c1.querySelectorAll('.eyebrow')[1].style.marginTop='14px';
+  }
+  v.append(c1);
+
+  // early signals
+  if(d.early.length){
+    const c=el('div','card');
+    c.append(el('div','rowhead',`<div class="eyebrow">Early signals</div><span class="badge">${d.early.length} building</span>`));
+    d.early.forEach(s=>{
+      const mx=Math.max(...s.streak,1);
+      const spark=s.streak.map((n,i)=>`<i class="${i===s.streak.length-1?'last':''}" style="height:${Math.max(12,n/mx*30)}px"></i>`).join('');
+      const row=el('div','esig');
+      row.innerHTML=`<div class="nm">${s.name}<span>${s.run} days in a row · building into today</span></div><div class="spark">${spark}</div>`;
+      if(DATA.ledger[s.name]){row.style.cursor='pointer';row.onclick=()=>openInstrument(s.name);}
+      c.append(row);
+    });
+    v.append(c);
+  }
+
+  // track record teaser
+  const t=DATA.track;
+  const tr=el('div','card tap');
+  tr.innerHTML=`<div class="rowhead"><div><div class="eyebrow">Track record</div>
+      <div class="sub">Has the show's call actually moved the market? ${t.confirmed}/${t.decided} did.</div></div>
+      <div class="ring-wrap"><div class="ring" style="--p:${t.hit_rate}%"></div><b>${t.hit_rate}%</b></div></div>`;
+  tr.onclick=()=>{curView='record';syncNav();render();};
+  v.append(tr);
+
+  // caution
+  if(d.caution.length){
+    const c=el('div','card');
+    c.append(el('div','eyebrow','Caution flags'));
+    d.caution.slice(0,4).forEach(x=>c.append(el('p','sub','“'+x+'”')));
+    v.append(c);
+  }
+  if(d.conviction.length){
+    v.append(el('p','disc','Conviction language today: '+d.conviction.map(x=>'“'+x+'”').join('  ·  ')));
+  }
+  v.append(el('p','disc','Signal from transcripts · outcome from real prices. Research prompts only — not financial advice.'));
+}
+
+function renderSignals(v){
+  v.append(el('h1','day','Signals radar'));
+  v.append(el('p','sub','Every instrument the show is tracking, most-followed first. Tap for its price story.'));
+  const items=Object.entries(DATA.ledger).sort((a,b)=>b[1].days-a[1].days||b[1].total-a[1].total);
+  const c=el('div','card');
+  items.forEach(([sym,r])=>{
+    const trail=r.trail.map(t=>trailTick(t.tone)).join('');
+    const row=el('div','lrow');
+    row.innerHTML=`<div><div class="tk">${sym}</div><div class="cat">${r.cat}</div></div>
+      <div class="grow"><div class="trail">${trail}</div>
+      <div class="small muted">${r.days} days · ${r.total} mentions</div></div>
+      <div class="muted">›</div>`;
+    row.onclick=()=>openInstrument(sym);
+    c.append(row);
+  });
+  v.append(c);
+}
+
+function renderRecord(v){
+  const t=DATA.track;
+  v.append(el('h1','day','Track record'));
+  v.append(el('p','sub','Signal = what the show said. Outcome = real Yahoo Finance prices afterwards.'));
+  const hero=el('div','card');
+  hero.innerHTML=`<div class="rowhead">
+     <div><div class="eyebrow">Hit rate</div>
+       <div class="sub">${t.confirmed} of ${t.decided} directional calls moved the implied way within 10 trading days. ${t.pending} still maturing.</div>
+       <div class="sub">Avg next-day move in the implied direction <b class="pos">${pct(t.t1avg)}</b> (n=${t.t1n})${t.avg_days?` · typically moves in <b>${t.avg_days}</b> day(s)`:''}.</div></div>
+     <div class="ring-wrap"><div class="ring" style="--p:${t.hit_rate}%"></div><b>${t.hit_rate}%</b></div></div>`;
+  v.append(hero);
+
+  v.append(el('div','eyebrow divlabel','Mention → market move'));
+  const c=el('div','card');
+  const evs=DATA.events.slice().sort((a,b)=>b.date<a.date?-1:1);
+  evs.forEach(e=>{
+    const icon={confirmed:'✅',contradicted:'❌',flat:'➖',pending:'⏳'}[e.status]||'·';
+    const r1=e.r['1'];
+    const rt = e.status==='pending' ? '<span class="flat">pending</span>'
+             : `<span class="${pctCls(r1)}">${pct(r1)}</span>`;
+    const row=el('div','ev');
+    row.innerHTML=`<span class="st">${icon}</span><span class="when">${fmtDate(e.date)}</span>
+      <span class="it">${e.item}</span> ${trailTick(e.dir)} <span class="rt">${rt}</span>`;
+    row.style.cursor='pointer'; row.onclick=()=>openInstrument(e.item);
+    c.append(row);
+  });
+  v.append(c);
+  v.append(el('p','disc','A move ≥1% the implied way within 10 trading days counts as confirmed. Educational only — not financial advice.'));
+}
+
+function syncNav(){document.querySelectorAll('.nav button').forEach(x=>x.setAttribute('aria-current', x.dataset.view===curView));}
+
+/* ---- Instrument sheet ------------------------------------------------ */
+const sheet=$('#sheet');
+$('#sheetClose').onclick=()=>sheet.classList.remove('open');
+function openInstrument(sym){
+  const r=DATA.ledger[sym]; if(!r) return;
+  $('#sheetTk').textContent=sym;
+  const b=$('#sheetBody'); b.innerHTML=''; b.scrollTop=0;
+  b.append(el('div','kv',
+    `<span class="pill">${r.cat}</span><span class="pill">first seen ${fmtDate(r.first_seen)}</span>
+     <span class="pill">${r.days} days · ${r.total} mentions</span>`));
+
+  // sentiment trail
+  b.append(el('div','eyebrow divlabel','Sentiment trail'));
+  b.append(el('div','trail',r.trail.map(t=>`${trailTick(t.tone)}`).join(' ')
+    +'  '+`<span class="small muted">${r.trail.map(t=>fmtDate(t.date)).join(' · ')}</span>`));
+
+  // this instrument's events (needed by the chart labels + the list below)
+  const evsAll=DATA.events.filter(e=>e.item===sym);
+
+  // price chart
+  const series=DATA.prices[sym];
+  if(series && series.length>1){
+    b.append(el('div','eyebrow divlabel','Price vs. when it was flagged'));
+    b.append(buildChart(series, r.trail, evsAll));
+    b.append(el('div','legend',
+      `<span><i style="background:var(--accent)"></i>price</span>
+       <span><i style="background:var(--bull)"></i>flagged bullish</span>
+       <span><i style="background:var(--bear)"></i>flagged bearish</span>
+       <span>labels = forward move from that day</span>`));
+  } else {
+    b.append(el('p','sub','No price series available for this item.'));
+  }
+
+  // this instrument's events
+  const evs=evsAll.slice().sort((a,b)=>b.date<a.date?-1:1);
+  if(evs.length){
+    b.append(el('div','eyebrow divlabel','Its calls, scored'));
+    const c=el('div','card');
+    evs.forEach(e=>{
+      const icon={confirmed:'✅',contradicted:'❌',flat:'➖',pending:'⏳'}[e.status]||'·';
+      const rr=[1,3,5,10].map(h=>{const val=e.r[String(h)];return `t+${h} ${val==null?'—':pct(val)}`;}).join('  ');
+      const row=el('div','ev');
+      row.innerHTML=`<span class="st">${icon}</span><span class="it">${trailTick(e.dir)} ${e.dir}</span>
+        <span class="when">${fmtDate(e.date)}</span><span class="rt small ${e.status==='pending'?'flat':''}">${e.status}${e.lag?' · '+e.lag+'d':''}</span>`;
+      c.append(row);
+      c.append(el('div','small muted tnum',rr));
+      c.lastChild.style.padding='0 0 8px 30px';
+    });
+    b.append(c);
+  }
+  b.append(el('p','disc','Signal from the transcript, outcome from real prices. Not financial advice.'));
+  sheet.classList.add('open');
+}
+
+/* The forward return that best tells the story:
+   - confirmed  -> the move at the horizon that confirmed it (days_to_move)
+   - otherwise  -> the furthest horizon we have data for
+   - pending    -> null */
+function bestReturn(ev){
+  if(!ev) return null;
+  if(ev.status==='confirmed' && ev.lag!=null && ev.r[String(ev.lag)]!=null)
+    return {h:ev.lag, v:ev.r[String(ev.lag)]};
+  for(const h of [10,5,3,1]){ const v=ev.r[String(h)]; if(v!=null) return {h,v}; }
+  return null; // still pending
+}
+
+/* ---- SVG line + HTML overlay (crisp dots & forward-return labels) ----- */
+function buildChart(series, trail, events){
+  const W=340,H=170,pad=6;
+  const xs=series.map(p=>p[0]), ys=series.map(p=>p[1]);
+  const min=Math.min(...ys),max=Math.max(...ys),span=(max-min)||1;
+  const X=i=>pad+i/(series.length-1)*(W-2*pad);
+  const Y=v=>pad+(1-(v-min)/span)*(H-2*pad);
+  const xPct=i=>X(i)/W*100, yPct=v=>Y(v)/H*100;
+  const line=series.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ');
+  const area=`M${X(0)} ${H-pad} `+series.map((p,i)=>`L${X(i).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ')+` L${X(series.length-1)} ${H-pad} Z`;
+  const grid=[0,.5,1].map(f=>`<line class="grid" x1="${pad}" x2="${W-pad}" y1="${(pad+f*(H-2*pad)).toFixed(1)}" y2="${(pad+f*(H-2*pad)).toFixed(1)}"></line>`).join('');
+  const last=series.length-1;
+  const wrap=el('div','chartwrap');
+  wrap.innerHTML=`<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="price chart">
+    ${grid}<path class="area" d="${area}"></path><path class="line" d="${line}"></path>
+    <line class="cross" id="cx" y1="${pad}" y2="${H-pad}"></line></svg>
+    <div class="mkov"></div>
+    <div class="tip" id="tip"></div>
+    <div class="axis"><span>${fmtDate(xs[0])}</span><span>${fmtDate(xs[last])}</span></div>`;
+
+  // Overlay: flagged-day dots + forward-return labels (staggered to avoid overlap).
+  const evByDate={}; events.forEach(e=>evByDate[e.date]=e);
+  const ov=wrap.querySelector('.mkov');
+  const flags=trail.filter(t=>t.tone==='bullish'||t.tone==='bearish');
+  flags.forEach((t,k)=>{
+    const i=xs.indexOf(t.date); if(i<0) return;
+    const left=Math.min(92,Math.max(8,xPct(i))), top=yPct(series[i][1]);
+    const dot=el('span','ovdot '+(t.tone==='bullish'?'b':'s'));
+    dot.style.left=left+'%'; dot.style.top=top+'%'; ov.append(dot);
+    const br=bestReturn(evByDate[t.date]);
+    const lab=el('span','mklab '+(br==null?'flatv':br.v>0.3?'pos':br.v<-0.3?'neg':'flatv'));
+    lab.textContent = br==null ? '⏳' : (br.v>0?'+':'')+br.v.toFixed(1)+'%';
+    const up = (k%2===0);                       // alternate above / below the dot
+    lab.style.left=left+'%';
+    lab.style.top=top+'%';
+    lab.style.transform=`translate(-50%, ${up?'-165%':'65%'})`;
+    ov.append(lab);
+  });
+  // endpoint marker
+  const endDot=el('span','ovdot end');
+  endDot.style.left=xPct(last)+'%'; endDot.style.top=yPct(series[last][1])+'%'; ov.append(endDot);
+
+  // crosshair + tooltip
+  const svg=wrap.querySelector('svg'), cx=wrap.querySelector('#cx'), tip=wrap.querySelector('#tip');
+  const move=ev=>{
+    const rect=svg.getBoundingClientRect();
+    const px=( (ev.touches?ev.touches[0].clientX:ev.clientX) - rect.left)/rect.width;
+    let i=Math.round(px*(series.length-1)); i=Math.max(0,Math.min(series.length-1,i));
+    const gx=X(i);
+    cx.setAttribute('x1',gx);cx.setAttribute('x2',gx);cx.style.opacity=1;
+    tip.style.opacity=1; tip.style.left=(gx/W*100)+'%'; tip.style.top=(Y(series[i][1])/H*100)+'%';
+    tip.textContent=`${fmtDate(xs[i])} · ${series[i][1]}`;
+  };
+  const leave=()=>{cx.style.opacity=0;tip.style.opacity=0;};
+  svg.addEventListener('pointermove',move); svg.addEventListener('pointerleave',leave);
+  svg.addEventListener('touchmove',move,{passive:true}); svg.addEventListener('touchend',leave);
+  return wrap;
+}
+
+$('#genline').textContent = 'updated '+fmtDate(DATA.generated);
+render();
+</script>
+
+</body>
+</html>
